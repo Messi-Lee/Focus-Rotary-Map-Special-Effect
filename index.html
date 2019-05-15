@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<title>焦点轮播图</title>
+		<style type="text/css">
+			* {
+				margin: 0;
+				padding: 0;
+				text-decoration: none;
+			}
+			
+			body {
+				padding: 20px;
+			}
+			
+			#container {
+				width: 600px;
+				height: 400px;
+				border: 3px solid #333;
+				overflow: hidden;
+				/*隐藏超出的列表*/
+				position: relative;
+			}
+			
+			#list {
+				width: 4200px;
+				height: 400px;
+				position: absolute;
+				/*父元素的属性为position: relative;让#list基于父元素(父元素相对定位)绝对定位*/
+				z-index: 1;
+			}
+			
+			#list img {
+				float: left;
+				width: 600px;
+			}
+			
+			#buttons {
+				position: absolute;
+				height: 10px;
+				width: 100px;
+				z-index: 2;
+				bottom: 20px;
+				left: 250px;
+			}
+			
+			#buttons span {
+				cursor: pointer;
+				float: left;
+				border: 1px solid #fff;
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+				background: #333;
+				margin-right: 5px;
+			}
+			
+			#buttons .on {
+				background: orangered;
+			}
+			
+			.arrow {
+				cursor: pointer;
+				display: none;
+				line-height: 39px;
+				text-align: center;
+				font-size: 36px;
+				font-weight: bold;
+				width: 40px;
+				height: 40px;
+				position: absolute;
+				z-index: 2;
+				top: 180px;
+				background-color: rgba(0, 0, 0, .3);
+				/*通过rgba()改变透明度,这里的透明度为0.3*/
+				color: #fff;
+			}
+			
+			.arrow:hover {
+				background-color: rgba(0, 0, 0, .7);
+			}
+			
+			#container:hover .arrow {
+				display: block;
+			}
+			
+			#prev {
+				left: 20px;
+			}
+			
+			#next {
+				right: 20px;
+			}
+		</style>
+		<script type="text/javascript">
+			window.onload = function() {
+				//页面加载完了才执行函数,为了能获取到id
+				var container = document.getElementById("container");
+				var list = document.getElementById("list");
+				//声明变量,通过id获取dom节点
+				var buttons = document.getElementById("buttons").getElementsByTagName("span");
+				//获取按钮,通过先获取按钮所在的<div>,然后通过上述方式获取按钮
+				var prev = document.getElementById("prev");
+				var next = document.getElementById("next");
+				var index = 1;
+				var animated = false; //对动画进行优化
+				var timer;
+				//点亮按钮
+				function showButton() {
+					for(var i = 0; i < buttons.length; i++) {
+						if(buttons[i].className == 'on') {
+							buttons[i].className = '';
+							break;
+						}
+					} //熄灭之前点亮的按钮
+					buttons[index - 1].className = 'on';
+				}
+
+				//添加事件绑定
+				function animate(offset) {
+					animated = true;
+					var newLeft = parseInt(list.style.left) + offset;
+					var time = 300; //位移总的时间
+					var interval = 10; //位移间隔时间
+					var speed = offset / (time / interval); //每一次的位移量
+					//判断什么情况下位移
+					function go() {
+						if((speed < 0 && parseInt(list.style.left) > newLeft) || (speed > 0 && parseInt(list.style.left) < newLeft)) {
+							list.style.left = parseInt(list.style.left) + speed + 'px';
+							setTimeout(go, interval); //递归实现切换动画
+						} else {
+							animated = false;
+							list.style.left = newLeft + 'px';
+							if(newLeft > -600) {
+								list.style.left = -3000 + 'px';
+							}
+							if(newLeft < -3000) {
+								list.style.left = -600 + "px";
+							} //实现无限滚动，在刷到最后一张照片时，接下来调到第一张
+						}
+					}
+					go();
+				}
+				//将分步的list.style.left = parseInt(list.style.left) +(-) 600 + 'px';封装成一个函数
+				function play() {
+					timer = setInterval(function() {
+						next.onclick();
+
+					}, 3000);
+				} //自动播放
+				function stop() {
+					clearInterval(timer);
+				}//清除自动播放事件
+				next.onclick = function() {
+					if(index == 5) {
+						index = 1;
+					} else {
+						index += 1;
+					}
+					showButton();
+					if(!animated) {
+						animate(-600);
+					}
+					//点击右箭头向左移动,parent()函数能将list.style.left的值600px转化为数字600
+				}
+				prev.onclick = function() {
+					if(index == 1) {
+						index = 5;
+					} else {
+						index -= 1;
+					}
+					showButton();
+					if(!animated) {
+						animate(600);
+					}
+					//                同理,左箭头向右移动
+				}
+				//按钮切换
+				for(var i = 0; i < buttons.length; i++) {
+					buttons[i].onclick = function() {
+						if(this.className == 'on') {
+							return;
+						}
+						var myIndex = parseInt(this.getAttribute('index')); //getAttribute()可以获得自定义属性，都可获取到
+						var offset = -600 * (myIndex - index);
+						if(!animated) {
+							animate(offset);
+						}
+						index = myIndex;
+						showButton();
+						//						debugger;//断点测试
+					}
+				}
+				//鼠标控制自动播放的开关
+				container.onmouseover = stop;
+				container.onmouseout = play;
+				
+				play();
+			}
+		</script>
+
+	</head>
+
+	<body>
+		<div id="container">
+			<div id="list" style="left: -600px;">
+				<img src="img/action-adventure-athlete-2261967.jpg" alt="5">
+				<img src="img/adult-brunette-editorial-2224735.jpg" alt="1">
+				<img src="img/architecture-building-carp-streamer-2187430.jpg" alt="2">
+				<img src="img/art-artist-band-2167166.jpg" alt="3">
+				<img src="img/cuisine-delicious-dish-2250632.jpg" alt="4">
+				<img src="img/action-adventure-athlete-2261967.jpg" alt="5">
+				<img src="img/adult-brunette-editorial-2224735.jpg" alt="1">
+				<!--这里轮播的是5张照片，<img>标签有7张照片的原因是因为要实现无限滚动-->
+			</div>
+			<div id="buttons">
+				<!--这里是图片轮播上的按钮-->
+				<span index="1" class="on"></span>
+				<span index="2"></span>
+				<span index="3"></span>
+				<span index="4"></span>
+				<span index="5"></span>
+			</div>
+			<!--这里是两个来回箭头-->
+			<a href="javascript:;" class="arrow" id="prev">&lt;</a>
+			<a href="javascript:;" class="arrow" id="next">&gt;</a>
+		</div>
+	</body>
+
+</html>
